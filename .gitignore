@@ -11,6 +11,7 @@ Saved/
 
 # VS + Rider + Code IDE
 .vscode/
+*.vs/
 .idea/
 *.sln
 *.VC.db
@@ -47,3 +48,4 @@ Documentation/
 # Log files
 *.log
 *.tlog
+.vsconfig
