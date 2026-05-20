@@ -10,18 +10,16 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "AC_SaveFile.generated.h"
+// Libraries Added for Save System
 
-// DECLARATION FIX: Tell the compiler this operator exists before reading the class functions
-
-// My Libraries Added
 //================================================================================================
 // Define Struct for Saving Files
 //================================================================================================
-// Define the struct in C++ so BOTH systems know exactly what it is
+// Define the struct
 USTRUCT(BlueprintType)
 struct FSystemSaveRegistration
 {
-	GENERATED_BODY()
+	GENERATED_BODY();
 
 	UPROPERTY(BlueprintReadWrite, Category = "Save Data")
 	FString SlotName;
@@ -40,32 +38,28 @@ struct FSystemSaveRegistration
 //================================================================================================
 // Child Class of public UActorComponent
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class BLACKSMITHGAME_API UAC_SaveFile : public UActorComponent
-{
+class BLACKSMITHGAME_API UAC_SaveFile : public UActorComponent {
 	GENERATED_BODY()
 public:	
 	//============================================================================================
 	// Constructors
 	//============================================================================================
-	// Sets default values for this component's properties
 	UAC_SaveFile();
 	//============================================================================================
 	// Event Tick
 	//============================================================================================
 	// Called every frame
-	
+	// No event tick. Event driven
 	//============================================================================================
 	// Other Public Functions
 	//============================================================================================
-	// Explicit parameters mean zero thunk macros, zero wildcards, and zero crashes
-	// Now we can use our own clean struct array directly! No wildcards, no thunks, no crashes.
+	// Save Files
 	UFUNCTION(BlueprintCallable, Category = "Save Recovery System")
 	bool SaveFiles(const TArray<FSystemSaveRegistration>& TargetRecords);
-
+	// Load Files
 	UFUNCTION(BlueprintCallable, Category = "Save Recovery System")
 	bool LoadFiles(TArray<FSystemSaveRegistration>& OutRecords);
-
-	// Updated to intake the target struct directly from Blueprints
+	// Delete Record
 	UFUNCTION(BlueprintCallable, Category = "Save Recovery System")
 	bool DeleteRecord(const FSystemSaveRegistration& RecordToDelete);
 	//============================================================================================
@@ -75,14 +69,11 @@ protected:
 	//============================================================================================
 	// Called when the game starts
 	virtual void BeginPlay() override;
-
 	//============================================================================================
 private:	
 	//============================================================================================
 	// Private Declarations
 	//============================================================================================
-	// Called every frame
-
 
 	//============================================================================================
 };

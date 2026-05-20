@@ -1,5 +1,4 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
 //================================================================================================
 // Libraries to Include
 //================================================================================================
@@ -12,9 +11,8 @@
 //================================================================================================
 // Forward Declarations
 //================================================================================================
-// Standard bitshift operator serialization overloading for our custom C++ struct
-FArchive& operator<<(FArchive& Ar, FSystemSaveRegistration& Record)
-{
+// Standard bitshift operator serialization overloading
+FArchive& operator<<(FArchive& Ar, FSystemSaveRegistration& Record) {
 	Ar << Record.SlotName;
 	Ar << Record.SaveDate;
 	Ar << Record.SaveTime;
@@ -23,49 +21,38 @@ FArchive& operator<<(FArchive& Ar, FSystemSaveRegistration& Record)
 //================================================================================================
 // UAC_SaveFile CPP
 //================================================================================================
-// Sets default values for this component's properties
+// Fucntion, Constructor
 //------------------------------------------------------------------------------------------------
-UAC_SaveFile::UAC_SaveFile()
-{
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
+// Sets default values for this component's properties
+UAC_SaveFile::UAC_SaveFile() {
 	PrimaryComponentTick.bCanEverTick = false;
-
-	// ...
 }
 //================================================================================================
-// Event Begin Play
-//================================================================================================
+// Function, Event Begin Play
+//------------------------------------------------------------------------------------------------
 // Called when the game starts
-void UAC_SaveFile::BeginPlay()
-{
+void UAC_SaveFile::BeginPlay() {
 	Super::BeginPlay();
-
-	// ...
-	
 }
 //================================================================================================
 // Other Functions
 //================================================================================================
 // Function, Save Files
 //------------------------------------------------------------------------------------------------
-bool UAC_SaveFile::SaveFiles(const TArray<FSystemSaveRegistration>& TargetRecords)
-{
-	// 1. Load the existing master registry from disk first so we don't blind-overwrite it
+bool UAC_SaveFile::SaveFiles(const TArray<FSystemSaveRegistration>& TargetRecords) {
+	// Load the System_Save_Registry.bin file into a master array to merge with the incoming data
 	TArray<FSystemSaveRegistration> MasterRegistry;
 	LoadFiles(MasterRegistry);
-
-	// 2. Loop through the incoming records you want to save
+	//Loop through the incoming records you want to save
 	for (const FSystemSaveRegistration& IncomingRecord : TargetRecords)
 	{
 		bool bFoundAndUpdated = false;
-
 		// Check if this slot already exists in our master registry
 		for (int32 i = 0; i < MasterRegistry.Num(); ++i)
 		{
 			if (MasterRegistry[i].SlotName.Equals(IncomingRecord.SlotName, ESearchCase::IgnoreCase))
 			{
-				// Match found! Update its metadata and image path with the fresh save data
+				// If match is found then update the existing record with the new data. 
 				MasterRegistry[i].SaveDate = IncomingRecord.SaveDate;
 				MasterRegistry[i].SaveTime = IncomingRecord.SaveTime;
 				MasterRegistry[i].ImagePath = IncomingRecord.ImagePath;
@@ -73,130 +60,113 @@ bool UAC_SaveFile::SaveFiles(const TArray<FSystemSaveRegistration>& TargetRecord
 				break;
 			}
 		}
-
-		// If it's a brand new slot (like adding DiscoKitty when only ASpicer existed), append it
+		// If it's a brand new slot, append it
 		if (!bFoundAndUpdated)
 		{
 			MasterRegistry.Add(IncomingRecord);
 		}
 	}
-
-	// 3. Now stream the fully merged master list back-to-back to disk
+	//  Now stream the fully merged master list back-to-back to disk
 	FString SavePath = FPaths::ProjectSavedDir() / TEXT("SaveGames/System_Save_Registry.bin");
 	FBufferArchive BinaryArchive;
-
 	int32 EntryCount = MasterRegistry.Num();
 	BinaryArchive << EntryCount;
-
 	for (int32 i = 0; i < EntryCount; ++i)
 	{
 		// Stream the copy cleanly through our custom operator
 		FSystemSaveRegistration RecordCopy = MasterRegistry[i];
 		BinaryArchive << RecordCopy;
 	}
-
 	// Commit the safe raw byte array back to disk
 	return FFileHelper::SaveArrayToFile(BinaryArchive, *SavePath);
 }
 //================================================================================================
 // Function, Load Files
 //------------------------------------------------------------------------------------------------
-bool UAC_SaveFile::LoadFiles(TArray<FSystemSaveRegistration>& OutRecords)
-{
+bool UAC_SaveFile::LoadFiles(TArray<FSystemSaveRegistration>& OutRecords) {
 	FString SavePath = FPaths::ProjectSavedDir() / TEXT("SaveGames/System_Save_Registry.bin");
 	TArray<uint8> RawBinaryData;
-
+	// Clear the output array to ensure it's empty before loading new data
 	OutRecords.Empty();
-
+	// Load the raw byte data from disk into a temporary array. If this fails, return false to indicate loading failure.
 	if (!FFileHelper::LoadFileToArray(RawBinaryData, *SavePath)) return false;
 	if (RawBinaryData.Num() == 0) return true;
-
+	// Open Memmory Reader
 	FMemoryReader BinaryReader(RawBinaryData, true);
-
+	// Setup the reader to match the endianness and serialization settings of the writer
 	int32 StoredCount = 0;
 	BinaryReader << StoredCount;
-
+	// Use the platform file manager to check for the existence of each image path as we load, correcting or emptying the path if the file is missing
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-
+	// Loop through the binary data and deserialize each struct record back into the output array
 	for (int32 i = 0; i < StoredCount; ++i)
 	{
 		FSystemSaveRegistration TempRecord;
 		BinaryReader << TempRecord; // Automatically pulls SlotName, SaveDate, SaveTime, and Saved ImagePath
-
-		// DOUBLE CHECK REAlITY: If the image was moved or renamed, make sure it's actually on disk
+		// DOUBLE CHECK: If the image was moved or renamed, make sure it's actually on disk
 		if (!PlatformFile.FileExists(*TempRecord.ImagePath))
 		{
 			// Failsafe fallback checking your dynamic export folder layout
 			FString FallbackPath = FPaths::ProjectSavedDir() / TEXT("SaveGames/") + TempRecord.SlotName + TEXT("_IMG.jpg");
-
+			// If the expected image file is missing, check the most likely fallback location before giving up and emptying the path
 			if (PlatformFile.FileExists(*FallbackPath))
 			{
 				TempRecord.ImagePath = FallbackPath;
 			}
 			else
 			{
-				TempRecord.ImagePath = TEXT(""); // Explicitly empty if missing completely so UI shows default card
+				TempRecord.ImagePath = TEXT("");
 			}
 		}
-
+		// Add the fully validated record to the output array
 		OutRecords.Add(TempRecord);
 	}
-
 	return true;
 }
 //================================================================================================
 // Function, Delete Record
 //------------------------------------------------------------------------------------------------
-bool UAC_SaveFile::DeleteRecord(const FSystemSaveRegistration& RecordToDelete)
-{
+bool UAC_SaveFile::DeleteRecord(const FSystemSaveRegistration& RecordToDelete) {
 	// Guard against empty input data
 	if (RecordToDelete.SlotName.IsEmpty()) return false;
-
-	// 1. Load the active master registry array from disk
+	// Load the active master registry array from disk
 	TArray<FSystemSaveRegistration> MasterRegistry;
 	LoadFiles(MasterRegistry);
-
 	bool bFoundAndRemoved = false;
-
-	// 2. Loop through the system register to find the record matching our input struct
+	// Loop through the system register to find the record matching our input struct
 	for (int32 i = 0; i < MasterRegistry.Num(); ++i)
 	{
 		if (MasterRegistry[i].SlotName.Equals(RecordToDelete.SlotName, ESearchCase::IgnoreCase))
 		{
-			// 3. TARGET FOUND: Construct the image path dynamically: SlotName + "_IMG.jpg"
+			// TARGET FOUND: Construct the image path dynamically: SlotName + "_IMG.jpg"
 			IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 			FString SaveGamesDir = FPaths::ProjectSavedDir() / TEXT("SaveGames/");
 			FString CompanionImagePath = SaveGamesDir / MasterRegistry[i].SlotName + TEXT("_IMG.jpg");
-
 			// Delete the physical screenshot image file from the directory
 			if (PlatformFile.FileExists(*CompanionImagePath))
 			{
 				PlatformFile.DeleteFile(*CompanionImagePath);
 			}
-
-			// 4. Remove the full struct element from the registry array container
+			// Remove the full struct element from the registry array container
 			MasterRegistry.RemoveAt(i);
 			bFoundAndRemoved = true;
 			break; // Break immediately since the target is removed
 		}
 	}
-
 	// If the registry didn't contain this file, exit without writing to disk
 	if (!bFoundAndRemoved) return false;
-
-	// 5. COMMIT THE UPDATED REGISTRY DATA BACK TO DISK
+	// COMMIT THE UPDATED REGISTRY DATA BACK TO DISK
 	FString RegistryPath = FPaths::ProjectSavedDir() / TEXT("SaveGames/System_Save_Registry.bin");
 	FBufferArchive BinaryArchive;
-
 	int32 EntryCount = MasterRegistry.Num();
 	BinaryArchive << EntryCount;
-
+	// Loop through the updated master registry and stream each record back-to-back to the binary archive using our custom operator
 	for (int32 i = 0; i < EntryCount; ++i)
 	{
 		FSystemSaveRegistration RecordCopy = MasterRegistry[i];
 		BinaryArchive << RecordCopy;
 	}
-
+	// Commit the safe raw byte array back to disk, returning true if successful
 	return FFileHelper::SaveArrayToFile(BinaryArchive, *RegistryPath);
 }
 //================================================================================================
