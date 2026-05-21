@@ -1,0 +1,35 @@
+END USER LICENSE AGREEMENT (EULA)
+
+This End User License Agreement ("Agreement") is a legal agreement between you ("User" or "Licensee") and [Your Studio Name or Your Name] ("Licensor") for the video game provisionally titled [Blacksmithing Game Name], including all executable files, code, assets, graphics, sounds, and documentation associated with it (collectively, the "Game").
+
+1. GRANT OF LICENSE
+Licensor grants you a non-exclusive, non-transferable, revocable, limited license to download, install, and play a single copy of the Game on a personal compatible device strictly for your personal, non-commercial entertainment. 
+
+2. RESTRICTIONS
+You agree not to, and will not permit others to:
+a) Copy, modify, adapt, translate, or create derivative works of the Game.
+b) Reverse engineer, decompile, disassemble, or attempt to derive the source code or underlying architecture of the Game, except as permitted by applicable law.
+c) Sublicense, rent, lease, sell, distribute, or commercially exploit the Game.
+d) Bypass, modify, or defeat any security or data obfuscation measures applied to the Game's data files or local save states.
+
+3. UNREAL® ENGINE MANDATORY TERMS
+The Game was developed using Unreal® Engine. Accordingly, the following terms apply to protect Epic Games, Inc. ("Epic"):
+a) You acknowledge that this Agreement is solely between you and Licensor, and not with Epic.
+b) You are granted no ownership, title, or intellectual property rights over the Unreal® Engine or its components.
+c) EPIC DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT REGARDING THE UNREAL ENGINE AND ITS COMPONENTS.
+d) TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL EPIC, ITS AFFILIATES, OR LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THE UNREAL ENGINE COMPONENTS.
+
+4. USER GENERATED CONTENT & STREAMING POLICY
+Licensor enthusiastically grants you permission to broadcast, livestream, record, and create video/audio content featuring gameplay of the Game (e.g., via Twitch, YouTube). You are permitted to monetize such content via standard ad-revenue sharing programs, provided that your videos do not distribute raw game files, stand-alone asset extractions, or claim ownership over the Game’s assets.
+
+5. SAVE DATA AND USER MODIFICATION DISCLAIMER
+The Game records progress locally on your storage device. Licensor makes no guarantee regarding the permanence, stability, or lack of corruption of local save files. Modifying, editing, or hex-editing raw binary data files (such as save registries or inventory records) is done entirely at your own risk. Licensor is under no obligation to provide technical support, recovery, or troubleshooting for save data corrupted by user-end modifications or third-party tools.
+
+6. TERMINATION
+This Agreement is effective until terminated. Your rights under this license will terminate automatically without notice if you fail to comply with any of its terms. Upon termination, you must cease all use of the Game and destroy all copies in your possession.
+
+7. LIMITATION OF LIABILITY
+TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, THE GAME IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. LICENSOR SHALL NOT BE LIABLE FOR ANY LOSS OF DATA, SYSTEM ERROR, HARDWARE DAMAGE, OR INDIRECT DAMAGES RESULTING FROM THE INSTALLATION OR USE OF THE GAME.
+
+[Spicer Games / alexander.spicer@hotmail.com]
+[Copyright © 2026 Spicer Games - All Rights Reserved.]

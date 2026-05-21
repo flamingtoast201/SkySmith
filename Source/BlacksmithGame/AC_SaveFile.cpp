@@ -170,5 +170,22 @@ bool UAC_SaveFile::DeleteRecord(const FSystemSaveRegistration& RecordToDelete) {
 	return FFileHelper::SaveArrayToFile(BinaryArchive, *RegistryPath);
 }
 //================================================================================================
+// Function, Encrypt
+//------------------------------------------------------------------------------------------------
+// Helper methods for basic byte shift obfuscation
+void UAC_SaveFile::EncryptBuffer(TArray<uint8>& InOutBytes) {
+	for (int32 i = 0; i < InOutBytes.Num(); ++i) {
+		InOutBytes[i] = InOutBytes[i] - 1;
+	}
+}
+//================================================================================================
+// Function, Decrypt
+//------------------------------------------------------------------------------------------------
+void UAC_SaveFile::DecryptBuffer(TArray<uint8>& InOutBytes) {
+	for (int32 i = 0; i < InOutBytes.Num(); ++i) {
+		InOutBytes[i] = InOutBytes[i] + 1;
+	}
+}
+//================================================================================================
 // End of UAC_SaveFile CPP
 //================================================================================================
