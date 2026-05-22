@@ -34,7 +34,39 @@ For inquiries or collaboration, contact:
 ### Sell
 *The game will have a shop which allows you to place items for sale that adventurers will pickup and then purchase from you.*
 
-### The Interactive Anvil Minigame
+### Saving and Loading +V0.1
+##Saving and Loading
+*Save and Load System that allows the player character to continue their progress between sessions.*
+Current Issues -> None known
+
+### Inventory System +V0.1
+##Inventory
+*The ability to store items and equipment in a dedicated menu that allows for the transfer of items.*
+Current Issues
+-> Inventory Overflow is not handled.
+
+## Equipment System
+*The ability to equip items and change the player character based on that equipment. This is a subsystem of the inventory system.*
+Current Issues
+-> Has been started but lacks the entire UI and the ability to equip items beyond a Test key.
+
+### Customization System +V0.1
+##Male Customization
+*The ability to choose from 10 Distinct Male versions of the following...
+-> Heads
+-> Bodies (in progress)
+-> Gauntlets (in progress)
+-> Legs (in progress)
+-> Feet (in progress)
+##Female Customization
+*The ability to choose from 10 Distince Female versions of the following...
+-> Heads
+-> Bodies (in progress)
+-> Gauntlets (in progress)
+-> Legs (in progress)
+-> Feet (in progress)
+
+### Work Station Minigame +V0.1
 A rhythmic, precision-based striking system that turns forging into an active skill:
 * **Radial Spin Loop:** A timing-based minigame featuring a dynamic status bar and a high-reward "Sweet Spot".
 * **The 4-State Execution Architecture:** Driven entirely by explicit variable references (no hardcoded numbers) to evaluate game states:
@@ -42,8 +74,19 @@ A rhythmic, precision-based striking system that turns forging into an active sk
     * `PROGRESS`: Well-timed hits compound the status bar using blueprint class-default multipliers.
     * `MISSTRIKE`: Errant hits apply specific penalties pulled directly from class defaults.
     * `TIMEOUT`: Reaching the time limit triggers a "Poof" routine, cleanly consuming resources from the forge slots.
+## Planned Workstations
+-> Anvil
+*General smithing workstation where the majority of items are finalized. Can place armor into the repair option to be able to restore durability via the minigame.*
+-> Smelter
+*General workstation where the majority of ores can be processed into ingots.*
+-> Grinding Stone
+*Gives the ability to repair durability on an item by grinding and sharpening the item for weapons.*
+-> Bellows
+*Raises global forge temp at the cost of charcoal or coal.*
+-> Quenching Bucket
+*Finalizes what has been shaped on the Anvil but has a 5% chance of failing the item if the workstation game is missed resulting in "cracking" the item.*
 
-### Order-Independent Recipe Scouting
+### Crafting System +V0.1
 A highly decoupled workbench inventory pipeline:
 * Players can throw raw resources into any of the 4 forge slots in any order.
 * An asynchronous recipe evaluation loop scans the slots, matches ingredient totals, and seamlessly maps them to Blueprint Actor Class Defaults—safely bridging background data structures to visual inventory grids.
