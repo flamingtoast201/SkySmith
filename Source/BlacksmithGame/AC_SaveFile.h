@@ -9,6 +9,11 @@
 // Engine Required Libraries
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Misc/Paths.h"
+#include "Misc/FileHelper.h"
+#include "Serialization/BufferArchive.h"
+#include "Serialization/MemoryReader.h"
+#include "HAL/PlatformFileManager.h"
 #include "AC_SaveFile.generated.h"
 // Libraries Added for Save System
 
@@ -19,7 +24,7 @@
 USTRUCT(BlueprintType)
 struct FSystemSaveRegistration
 {
-	GENERATED_BODY();
+	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite, Category = "Save Data")
 	FString SlotName;

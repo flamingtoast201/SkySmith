@@ -3,11 +3,6 @@
 // Libraries to Include
 //================================================================================================
 #include "AC_SaveFile.h"
-#include "Misc/Paths.h"
-#include "Misc/FileHelper.h"
-#include "Serialization/BufferArchive.h"
-#include "Serialization/MemoryReader.h"
-#include "HAL/PlatformFileManager.h"
 //================================================================================================
 // Forward Declarations
 //================================================================================================
@@ -16,6 +11,7 @@ FArchive& operator<<(FArchive& Ar, FSystemSaveRegistration& Record) {
 	Ar << Record.SlotName;
 	Ar << Record.SaveDate;
 	Ar << Record.SaveTime;
+	Ar << Record.ImagePath;
 	return Ar;
 }
 //================================================================================================
@@ -78,6 +74,7 @@ bool UAC_SaveFile::SaveFiles(const TArray<FSystemSaveRegistration>& TargetRecord
 		BinaryArchive << RecordCopy;
 	}
 	// Commit the safe raw byte array back to disk
+	EncryptBuffer(BinaryArchive);
 	return FFileHelper::SaveArrayToFile(BinaryArchive, *SavePath);
 }
 //================================================================================================
@@ -91,6 +88,8 @@ bool UAC_SaveFile::LoadFiles(TArray<FSystemSaveRegistration>& OutRecords) {
 	// Load the raw byte data from disk into a temporary array. If this fails, return false to indicate loading failure.
 	if (!FFileHelper::LoadFileToArray(RawBinaryData, *SavePath)) return false;
 	if (RawBinaryData.Num() == 0) return true;
+	// Decrypt the raw byte data before deserialization
+	DecryptBuffer(RawBinaryData);
 	// Open Memmory Reader
 	FMemoryReader BinaryReader(RawBinaryData, true);
 	// Setup the reader to match the endianness and serialization settings of the writer
@@ -127,47 +126,41 @@ bool UAC_SaveFile::LoadFiles(TArray<FSystemSaveRegistration>& OutRecords) {
 // Function, Delete Record
 //------------------------------------------------------------------------------------------------
 bool UAC_SaveFile::DeleteRecord(const FSystemSaveRegistration& RecordToDelete) {
-	// Guard against empty input data
+	// 1. Guard against empty input
 	if (RecordToDelete.SlotName.IsEmpty()) return false;
-	// Load the active master registry array from disk
+
+	// 2. Load the registry (this automatically decrypts the data)
 	TArray<FSystemSaveRegistration> MasterRegistry;
 	LoadFiles(MasterRegistry);
+
 	bool bFoundAndRemoved = false;
-	// Loop through the system register to find the record matching our input struct
-	for (int32 i = 0; i < MasterRegistry.Num(); ++i)
-	{
-		if (MasterRegistry[i].SlotName.Equals(RecordToDelete.SlotName, ESearchCase::IgnoreCase))
-		{
-			// TARGET FOUND: Construct the image path dynamically: SlotName + "_IMG.jpg"
+
+	// 3. Find and remove the target
+	for (int32 i = 0; i < MasterRegistry.Num(); ++i) {
+		if (MasterRegistry[i].SlotName.Equals(RecordToDelete.SlotName, ESearchCase::IgnoreCase)) {
+
+			// Delete the physical companion image
 			IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 			FString SaveGamesDir = FPaths::ProjectSavedDir() / TEXT("SaveGames/");
 			FString CompanionImagePath = SaveGamesDir / MasterRegistry[i].SlotName + TEXT("_IMG.jpg");
-			// Delete the physical screenshot image file from the directory
-			if (PlatformFile.FileExists(*CompanionImagePath))
-			{
+
+			if (PlatformFile.FileExists(*CompanionImagePath)) {
 				PlatformFile.DeleteFile(*CompanionImagePath);
 			}
-			// Remove the full struct element from the registry array container
+
+			// Remove from array
 			MasterRegistry.RemoveAt(i);
 			bFoundAndRemoved = true;
-			break; // Break immediately since the target is removed
+			break;
 		}
 	}
-	// If the registry didn't contain this file, exit without writing to disk
+
+	// 4. If nothing was found, exit early
 	if (!bFoundAndRemoved) return false;
-	// COMMIT THE UPDATED REGISTRY DATA BACK TO DISK
-	FString RegistryPath = FPaths::ProjectSavedDir() / TEXT("SaveGames/System_Save_Registry.bin");
-	FBufferArchive BinaryArchive;
-	int32 EntryCount = MasterRegistry.Num();
-	BinaryArchive << EntryCount;
-	// Loop through the updated master registry and stream each record back-to-back to the binary archive using our custom operator
-	for (int32 i = 0; i < EntryCount; ++i)
-	{
-		FSystemSaveRegistration RecordCopy = MasterRegistry[i];
-		BinaryArchive << RecordCopy;
-	}
-	// Commit the safe raw byte array back to disk, returning true if successful
-	return FFileHelper::SaveArrayToFile(BinaryArchive, *RegistryPath);
+
+	// 5. Commit using the centralized SaveFiles method
+	// This ensures we use the same encryption logic and prevents duplicate serialization code
+	return SaveFiles(MasterRegistry);
 }
 //================================================================================================
 // Function, Encrypt
