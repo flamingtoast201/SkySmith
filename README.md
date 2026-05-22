@@ -1,4 +1,5 @@
-# Blacksmithing Simulator (Working Title)
+### Sky Smith
+# Blacksmithing Simulator
 
 # Copyright © 2026 Spicer Games - All Rights Reserved.
 
