@@ -41,7 +41,7 @@ jobs:
 
           # 2. Build the standard Discord notification payload safely using jq
           payload=$(jq -n \
-            --arg un "Scrap Runners Bot" \
+            --arg un "Blacksmithing Game Bot" \
             --arg title "$TITLE" \
             --arg repo "${{ github.repository }}" \
             --arg user "${{ github.actor }}" \
