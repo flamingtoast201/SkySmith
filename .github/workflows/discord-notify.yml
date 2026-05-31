@@ -59,3 +59,9 @@ jobs:
           curl -s -X POST "http://107.181.68.62:1666/github-webhook" \
                -H "Content-Type: application/json" \
                -d "$payload" || echo "Local server proxy offline, skipping drop."
+
+          - name: Dispatch Payload Directly to C++ Engine
+          run: |
+          curl -X POST https://your-unique-id.ngrok-free.app/github-webhook \
+          -H "Content-Type: application/json" \
+          -d "{\"repository\":{\"full_name\":\"${{ github.repository }}\"},\"message\":\"${{ github.event.head_commit.message }}\"}"
