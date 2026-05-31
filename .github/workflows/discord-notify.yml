@@ -14,9 +14,14 @@ jobs:
       - name: Process Event and Dispatch Dual Streams
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_BOT_NAME: ${{ secrets.DISCORD_BOT_NAME }}
         run: |
           if [ -z "$DISCORD_WEBHOOK" ]; then
             echo "Error: DISCORD_WEBHOOK_URL secret not found."
+            exit 1
+          fi
+          if [ -z "$DISCORD_BOT_NAME" ]; then
+            echo "Error: DISCORD_BOT_NAME secret not found."
             exit 1
           fi
 
@@ -41,7 +46,7 @@ jobs:
 
           # 2. Build the standard Discord notification payload safely using jq
           payload=$(jq -n \
-            --arg un "Blacksmithing Game Bot" \
+            --arg un "$DISCORD_BOT_NAME" \
             --arg title "$TITLE" \
             --arg repo "${{ github.repository }}" \
             --arg user "${{ github.actor }}" \
