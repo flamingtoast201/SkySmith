@@ -51,7 +51,7 @@ jobs:
           echo "Dispatching to Discord channel..."
           curl -s -H "Content-Type: application/json" -d "$DISCORD_PAYLOAD" "$DISCORD_WEBHOOK"
 
-          # 3. Fire Outbound C++ Server Packet
+          # 3. Fire Outbound C++ Server Packet (Strictly on Port 1666)
           if [ -n "$MY_SERVER_IP" ]; then
             echo "Building raw C++ pipeline payload..."
             SERVER_PAYLOAD=$(jq -n \
