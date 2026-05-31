@@ -14,14 +14,9 @@ jobs:
       - name: Send Discord Notification
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          DISCORD_WEBHOOK_TARGET2: ${{ secrets.DISCORD_WEBHOOK_URL2 }}
         run: |
           if [ -z "$DISCORD_WEBHOOK" ]; then
             echo "Error: DISCORD_WEBHOOK_URL secret not found."
-            exit 1
-          fi
-          if [ -z "$DISCORD_WEBHOOK_TARGET2" ]; then
-            echo "Error: DISCORD_WEBHOOK_URL2 secret not found."
             exit 1
           fi
 
@@ -31,7 +26,6 @@ jobs:
             MSG="${{ github.event.head_commit.message }}"
             URL="${{ github.event.head_commit.url }}"
           elif [ "${{ github.event_name }}" == "issue_comment" ]; then
-            # NEW: Grab the Issue Title
             ISSUE_NAME="${{ github.event.issue.title }}"
             TITLE="Comment on: $ISSUE_NAME (#${{ github.event.issue.number }})"
             MSG="${{ github.event.comment.body }}"
@@ -55,6 +49,13 @@ jobs:
               content: ("**\($title)**\n**Repo:** \($repo)\n**User:** \($user)\n**Content:** \($msg)\n**Link:** \($url)")
             }')
 
-          # 3. Send the POST request
+          # 3. ROUTE CORRECTION
+          # Message 1: Out to your main Discord channel
+          echo "Sending status embed to Discord..."
           curl -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK"
-          curl -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK_TARGET2"
+
+          # Message 2: Shuttled directly down to your local C++ program
+          echo "Forwarding raw packet payload to local C++ server socket..."
+          curl -s -X POST "http://107.181.68.62:1666/github-webhook" \
+               -H "Content-Type: application/json" \
+               -d "$payload" || echo "Local server proxy offline, skipping drop."
