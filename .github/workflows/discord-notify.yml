@@ -11,7 +11,7 @@ jobs:
   discord:
     runs-on: ubuntu-latest
     steps:
-      - name: Send Discord Notification
+      - name: Process Event and Dispatch Dual Streams
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
@@ -20,23 +20,26 @@ jobs:
             exit 1
           fi
 
-          # 1. Determine the event type and build the message
+          # 1. Determine the event type and build the messages
           if [ "${{ github.event_name }}" == "push" ]; then
             TITLE="Code Push"
             MSG="${{ github.event.head_commit.message }}"
             URL="${{ github.event.head_commit.url }}"
+            REPO="${{ github.repository }}"
           elif [ "${{ github.event_name }}" == "issue_comment" ]; then
             ISSUE_NAME="${{ github.event.issue.title }}"
             TITLE="Comment on: $ISSUE_NAME (#${{ github.event.issue.number }})"
             MSG="${{ github.event.comment.body }}"
             URL="${{ github.event.comment.html_url }}"
+            REPO="${{ github.repository }} (Comment)"
           else
             TITLE="GitHub Notification"
             MSG="Action triggered by ${{ github.event_name }}"
             URL="${{ github.event.repository.html_url }}"
+            REPO="${{ github.repository }}"
           fi
 
-          # 2. Build the JSON payload safely
+          # 2. Build the standard Discord notification payload safely using jq
           payload=$(jq -n \
             --arg un "Scrap Runners Bot" \
             --arg title "$TITLE" \
@@ -49,19 +52,12 @@ jobs:
               content: ("**\($title)**\n**Repo:** \($repo)\n**User:** \($user)\n**Content:** \($msg)\n**Link:** \($url)")
             }')
 
-          # 3. ROUTE CORRECTION
-          # Message 1: Out to your main Discord channel
-          echo "Sending status embed to Discord..."
+          # STREAM 1: Blasts the clean status embed notification directly to Discord
+          echo "Sending standard status log to Discord..."
           curl -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK"
 
-          # Message 2: Shuttled directly down to your local C++ program
-          echo "Forwarding raw packet payload to local C++ server socket..."
-          curl -s -X POST "http://107.181.68.62:1666/github-webhook" \
-               -H "Content-Type: application/json" \
-               -d "$payload" || echo "Local server proxy offline, skipping drop."
-
-          - name: Shoot Payload Across Internet to ntfy Pipeline
-          run: |
-            curl -X POST https://ntfy.sh/skysmith_dev_pipeline_2026 \
-              -H "Content-Type: application/json" \
-              -d '{"repository":{"full_name":"${{ github.repository }}"},"message":"${{ github.event.head_commit.message }}"}'
+          # STREAM 2: Blasts the raw JSON text to ntfy so your C++ engine intercepts it
+          echo "Piping data payload across the internet to C++ engine via ntfy..."
+          curl -s -X POST https://ntfy.sh/skysmith_dev_pipeline_2026 \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg repo "$REPO" --arg msg "$MSG" '{repository: {full_name: $repo}, message: $msg}')"
