@@ -4,12 +4,14 @@ on:
   push:
     branches:
       - main
+  issue_comment:
+    types: [created]
 
 jobs:
   discord:
     runs-on: ubuntu-latest
     steps:
-      - name: Send Target Notifications
+      - name: Send Discord Notification
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
@@ -18,22 +20,36 @@ jobs:
             exit 1
           fi
 
-          TITLE="Code Push"
-          MSG="${{ github.event.head_commit.message }}"
-          URL="${{ github.event.head_commit.url }}"
-          REPO="${{ github.repository }}"
-          USER="${{ github.actor }}"
+          # 1. Determine the event type and build the message
+          if [ "${{ github.event_name }}" == "push" ]; then
+            TITLE="Code Push"
+            MSG="${{ github.event.head_commit.message }}"
+            URL="${{ github.event.head_commit.url }}"
+          elif [ "${{ github.event_name }}" == "issue_comment" ]; then
+            # NEW: Grab the Issue Title
+            ISSUE_NAME="${{ github.event.issue.title }}"
+            TITLE="Comment on: $ISSUE_NAME (#${{ github.event.issue.number }})"
+            MSG="${{ github.event.comment.body }}"
+            URL="${{ github.event.comment.html_url }}"
+          else
+            TITLE="GitHub Notification"
+            MSG="Action triggered by ${{ github.event_name }}"
+            URL="${{ github.event.repository.html_url }}"
+          fi
 
-          # 1. Fire Outbound Discord Packet (The main alert)
-          echo "Building Discord payload..."
-          DISCORD_PAYLOAD=$(jq -n \
-            --arg un "SkySmith Bot" \
+          # 2. Build the JSON payload safely
+          payload=$(jq -n \
+            --arg un "Scrap Runners Bot" \
             --arg title "$TITLE" \
-            --arg repo "$REPO" \
-            --arg user "$USER" \
+            --arg repo "${{ github.repository }}" \
+            --arg user "${{ github.actor }}" \
             --arg msg "$MSG" \
             --arg url "$URL" \
-            '{username: $un, content: ("**\($title)**\n**Repo:** \($repo)\n**User:** \($user)\n**Content:** \($msg)\n**Link:** \($url)")}')
-          
-          echo "Dispatching to Discord channel..."
-          curl -s -H "Content-Type: application/json" -d "$DISCORD_PAYLOAD" "$DISCORD_WEBHOOK"
+            '{
+              username: $un,
+              content: ("**\($title)**\n**Repo:** \($repo)\n**User:** \($user)\n**Content:** \($msg)\n**Link:** \($url)")
+            }')
+
+          # 3. Send the POST request
+          curl -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK"
+          curl -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK_TARGET2"
