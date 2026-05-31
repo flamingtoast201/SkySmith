@@ -60,8 +60,8 @@ jobs:
                -H "Content-Type: application/json" \
                -d "$payload" || echo "Local server proxy offline, skipping drop."
 
-          - name: Dispatch Payload Directly to C++ Engine
+          - name: Shoot Payload Across Internet to ntfy Pipeline
           run: |
-          curl -X POST http://107.181.68.62:1666/ \
-          -H "Content-Type: application/json" \
-          -d "{\"repository\":{\"full_name\":\"${{ github.repository }}\"},\"message\":\"${{ github.event.head_commit.message }}\"}"
+            curl -X POST https://ntfy.sh/skysmith_dev_pipeline_2026 \
+              -H "Content-Type: application/json" \
+              -d '{"repository":{"full_name":"${{ github.repository }}"},"message":"${{ github.event.head_commit.message }}"}'
