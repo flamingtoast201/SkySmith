@@ -14,7 +14,6 @@ jobs:
       - name: Send Target Notifications
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          # ADDED: Put your server's public IP or domain name as a GitHub secret
           MY_SERVER_IP: ${{ secrets.MY_SERVER_PUBLIC_IP }} 
         run: |
           if [ -z "$DISCORD_WEBHOOK" ]; then
@@ -22,7 +21,7 @@ jobs:
             exit 1
           fi
 
-          # 1. Determine the event type and build the message
+          # 1. Extract Event Metadata
           if [ "${{ github.event_name }}" == "push" ]; then
             TITLE="Code Push"
             MSG="${{ github.event.head_commit.message }}"
@@ -38,44 +37,36 @@ jobs:
             URL="${{ github.event.repository.html_url }}"
           fi
 
-          # 2. Build the JSON payload safely matching your C++ expected structure
-          payload=$(jq -n \
-            --arg title "$TITLE" \
-            --arg repo "${{ github.repository }}" \
-            --arg user "${{ github.actor }}" \
-            --arg msg "$MSG" \
-            --arg url "$URL" \
-            '{
-              repository: { full_name: $repo },
-              commits: [
-                { message: ("[" + $title + "] By " + $user + ": " + $msg + "\nLink: " + $url) }
-              ]
-            }')
-
-          # 3. Send out to Discord (Original layout)
-          discord_payload=$(jq -n \
+          # 2. Fire Outbound Discord Packet
+          echo "Building Discord payload..."
+          DISCORD_PAYLOAD=$(jq -n \
             --arg un "Scrap Runners Bot" \
             --arg title "$TITLE" \
             --arg repo "${{ github.repository }}" \
             --arg user "${{ github.actor }}" \
             --arg msg "$MSG" \
             --arg url "$URL" \
-            '{
-              username: $un,
-              content: ("**\($title)**\n**Repo:** \($repo)\n**User:** \($user)\n**Content:** \($msg)\n**Link:** \($url)")
-            }')
+            '{username: $un, content: ("**\($title)**\n**Repo:** \($repo)\n**User:** \($user)\n**Content:** \($msg)\n**Link:** \($url)")}')
           
-          echo "Dispatching to Discord..."
-          curl -H "Content-Type: application/json" -d "$discord_payload" "$DISCORD_WEBHOOK"
+          echo "Dispatching to Discord channel..."
+          curl -s -H "Content-Type: application/json" -d "$DISCORD_PAYLOAD" "$DISCORD_WEBHOOK"
 
-          # 4. ADDED: Dispatch raw clean payload straight to your C++ server executable
+          # 3. Fire Outbound C++ Server Packet
           if [ -n "$MY_SERVER_IP" ]; then
-            echo "Dispatching raw payload packet to local pipeline server..."
-            # Forcing port 1666 explicitly per your configuration
-            curl -4 -X POST "http://$MY_SERVER_IP:1666/github-webhook" \
+            echo "Building raw C++ pipeline payload..."
+            SERVER_PAYLOAD=$(jq -n \
+              --arg title "$TITLE" \
+              --arg repo "${{ github.repository }}" \
+              --arg user "${{ github.actor }}" \
+              --arg msg "$MSG" \
+              --arg url "$URL" \
+              '{repository: { full_name: $repo }, commits: [{ message: ("[" + $title + "] By " + $user + ": " + $msg + "\nLink: " + $url) }]}')
+
+            echo "Routing payload directly to server IP: $MY_SERVER_IP on port 1666..."
+            curl -4 -X POST "http://${MY_SERVER_IP}:1666/github-webhook" \
                  -H "Content-Type: application/json" \
-                 -d "$payload" \
-                 --max-time 10 || echo "Server connection timed out or packet dropped."
+                 -d "$SERVER_PAYLOAD" \
+                 --max-time 15 || echo "Network pipeline drop failed."
           else
-            echo "Skipping server drop: MY_SERVER_PUBLIC_IP secret is empty."
+            echo "Skipping pipeline: MY_SERVER_PUBLIC_IP secret is not set in repository."
           fi
