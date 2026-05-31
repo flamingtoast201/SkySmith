@@ -14,9 +14,14 @@ jobs:
       - name: Send Discord Notification
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_TARGET2: ${{ secrets.DISCORD_WEBHOOK_URL2 }}
         run: |
           if [ -z "$DISCORD_WEBHOOK" ]; then
             echo "Error: DISCORD_WEBHOOK_URL secret not found."
+            exit 1
+          fi
+          if [ -z "$DISCORD_WEBHOOK_TARGET2" ]; then
+            echo "Error: DISCORD_WEBHOOK_URL2 secret not found."
             exit 1
           fi
 
