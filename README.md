@@ -99,6 +99,9 @@ A highly decoupled workbench inventory pipeline:
 
 ---
 
+<img width="192" height="192" alt="SkySmithIcon192x192" src="https://github.com/user-attachments/assets/4094e4e0-7085-4454-a1dd-89cfd7df212c" />
+
+
 ## **Technical Implementation Highlights**
 * **Decoupled UI Passivity Tree:** Fully decoupled `WBP_Inventory` and slot interaction systems matching back-end data arrays via distinct active-border highlight overrides.
 * **Custom Save File System:** Implements low-overhead bitshift operator serialization overloading via standard `FArchive` binaries, keeping player data processing highly performant and secure.
